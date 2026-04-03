@@ -710,6 +710,5 @@ def viral():
 
 
 if __name__ == "__main__":
-    # Render (and most production hosts) set PORT. Locally you can still run with python app.py.
-    port = int(os.environ.get("PORT", "5000"))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
