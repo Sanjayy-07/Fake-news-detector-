@@ -45,7 +45,7 @@ METRICS_POSITIVE_LABEL = 0  # 0 = Fake (matches Fake.csv label)
 
 def _load_artifacts():
     # Loading at startup keeps predictions fast and avoids reloading on every request.
-    model = tf.keras.models.load_model(MODEL_PATH)
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
     with open(TOKENIZER_PATH, "rb") as f:
         tokenizer = pickle.load(f)
     return model, tokenizer
