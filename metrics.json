@@ -1,0 +1,7 @@
+{
+  "accuracy": 97.23,
+  "precision": 95.89,
+  "recall": 98.83,
+  "f1": 97.34,
+  "positive_label": 0
+}

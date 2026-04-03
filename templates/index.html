@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fake News Detector</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true"></div>
+
+    <main class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">🧠</div>
+          <div>
+            <h1>Fake News Detector</h1>
+            <p class="subtitle">LSTM-powered binary classification</p>
+            <div class="viral-box" aria-live="polite">
+              <div class="viral-head">
+                <div class="viral-title">Viral worldwide news</div>
+                <button id="refreshViralBtn" class="icon-btn small" type="button" aria-label="Refresh viral news">
+                  Refresh
+                </button>
+              </div>
+              <div class="viral-controls">
+                <select id="viralCategory" name="viralCategory" aria-label="Viral category">
+                  <option value="top">Top</option>
+                  <option value="world">World</option>
+                  <option value="politics">Politics</option>
+                  <option value="war">War / Conflict</option>
+                  <option value="sports">Sports</option>
+                  <option value="health">Health</option>
+                  <option value="science">Science</option>
+                  <option value="tech">Technology</option>
+                  <option value="business">Business</option>
+                </select>
+                <select id="viralSelect" name="viralSelect" disabled>
+                  <option value="">Loading viral headlines…</option>
+                </select>
+                <button id="useViralBtn" class="secondary" type="button" disabled>Analyze this</button>
+              </div>
+              <div id="viralSource" class="meta meta-muted"></div>
+            </div>
+          </div>
+        </div>
+
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle dark/light mode">
+          <span id="themeToggleIcon" aria-hidden="true">🌙</span>
+        </button>
+      </header>
+
+      <section class="card input-card">
+        <form id="newsForm" class="form" autocomplete="off">
+          <label for="news" class="label">Paste the news text</label>
+          <textarea
+            id="news"
+            name="news"
+            rows="8"
+            placeholder="Enter news text here..."
+            minlength="{{ min_chars }}"
+          ></textarea>
+
+          <div class="live-row">
+            <div class="live-left">
+              <label for="category" class="label small-label">Or pull today’s news</label>
+              <div class="live-controls">
+                <select id="category" name="category">
+                  <option value="general">General / Politics</option>
+                  <option value="world">World</option>
+                  <option value="india">India</option>
+                  <option value="sports">Sports</option>
+                  <option value="cricket">Cricket</option>
+                  <option value="business">Business</option>
+                  <option value="markets">Markets / Shares</option>
+                  <option value="tech">Technology</option>
+                  <option value="science">Science</option>
+                  <option value="health">Health</option>
+                  <option value="entertainment">Entertainment</option>
+                </select>
+                <button id="fetchNewsBtn" class="secondary" type="button">Fetch headlines</button>
+                <button id="randomHeadlineBtn" class="secondary" type="button" disabled>Random headline</button>
+              </div>
+              <div class="live-controls">
+                <select id="headlineSelect" name="headlineSelect" disabled>
+                  <option value="">Headlines will appear here…</option>
+                </select>
+                <button id="useHeadlineBtn" class="secondary" type="button" disabled>Use selected</button>
+              </div>
+              <div id="liveSource" class="meta meta-muted"></div>
+            </div>
+          </div>
+
+          <div class="meta-row">
+            <div id="wordCount" class="meta">0 words</div>
+            <div class="meta meta-muted">Min {{ min_chars }} characters</div>
+          </div>
+
+          <div id="alert" class="alert" role="alert" hidden></div>
+
+          <div class="button-row">
+            <button id="predictBtn" class="primary" type="submit">
+              <span id="predictBtnText">Analyze</span>
+              <span id="loadingSpinner" class="spinner" aria-hidden="true" hidden></span>
+            </button>
+            <button id="clearBtn" class="secondary" type="button">Clear</button>
+          </div>
+
+          <div class="samples" aria-label="Quick test samples">
+            <button type="button" class="sample-btn" data-sample="real">Try Real News</button>
+            <button type="button" class="sample-btn" data-sample="fake">Try Fake News</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="resultCard" class="card result-card" hidden>
+        <div class="result-header">
+          <div class="result-badge" id="predictionBadge">—</div>
+          <div class="result-confidence">
+            Confidence: <strong id="confidenceText">—</strong>
+          </div>
+        </div>
+
+        <div class="prob-bar-wrap" aria-label="Confidence bar visualization">
+          <div class="prob-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+            <div id="segReal" class="seg seg-real"></div>
+            <div id="segFake" class="seg seg-fake"></div>
+          </div>
+          <div class="prob-legend">
+            <span><span class="dot dot-real" aria-hidden="true"></span> Real: <strong id="realProb">—</strong></span>
+            <span><span class="dot dot-fake" aria-hidden="true"></span> Fake: <strong id="fakeProb">—</strong></span>
+          </div>
+        </div>
+
+        <div class="result-footer">
+          <div class="word-summary">Word count: <strong id="resultWordCount">—</strong></div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card explain-card">
+          <h2>How this works</h2>
+          <div class="explain-body">
+            <p><strong>LSTM (Long Short-Term Memory):</strong> It reads the words in order and learns useful patterns for text classification.</p>
+            <p><strong>Why deep learning:</strong> LSTMs learn complex language signals automatically, which helps improve detection compared to simple rules.</p>
+            <p><strong>What confidence means:</strong> The model outputs a probability for one class. Higher confidence indicates the model is more sure about its prediction.</p>
+          </div>
+        </div>
+
+        <div class="card metrics-card">
+          <h2>Performance (Demo)</h2>
+          <div class="metrics-grid">
+            <div class="metric">
+              <div class="metric-label">Accuracy</div>
+              <div class="metric-value" id="metricAccuracy">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Precision</div>
+              <div class="metric-value" id="metricPrecision">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Recall</div>
+              <div class="metric-value" id="metricRecall">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">F1 Score</div>
+              <div class="metric-value" id="metricF1">—</div>
+            </div>
+          </div>
+          <p class="muted">These are placeholders for your demo. Paste your real evaluation metrics if you compute them during training.</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // Used by static JS without hardcoding values.
+      window.__APP_CONFIG__ = {
+        minChars: {{ min_chars }},
+      };
+    </script>
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </body>
+</html>
